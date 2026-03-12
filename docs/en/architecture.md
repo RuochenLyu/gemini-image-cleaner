@@ -8,6 +8,7 @@ Banana Cleaner is designed as a local-first Gemini watermark remover that remain
 
 - `src/App.tsx`: page state, batch summary, locale switching, preview dialog, and downloads
 - `src/components/`: upload, summary, result cards, and preview UI
+- `src/components/ui/`: project-local `shadcn/ui` primitives built on Radix
 - `src/lib/watermark/`: file decoding, mask alpha maps, worker orchestration, and PNG export
 - `src/lib/queue/`: sequential batch processing queue
 - `src/workers/`: pixel restoration worker

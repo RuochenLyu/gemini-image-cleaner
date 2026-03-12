@@ -1,19 +1,32 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LanguageSwitcher } from "./components/common/LanguageSwitcher";
-import { StatusSummary } from "./components/common/StatusSummary";
-import { PreviewDialog } from "./components/preview/PreviewDialog";
-import { ResultGrid } from "./components/results/ResultGrid";
-import { UploadPanel } from "./components/upload/UploadPanel";
+import { TriangleAlertIcon } from "lucide-react";
+import {
+  startTransition,
+  useDeferredValue,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { toast } from "sonner";
+
+import { LanguageSwitcher } from "@/components/common/LanguageSwitcher";
+import { StatusSummary } from "@/components/common/StatusSummary";
+import { PreviewDialog } from "@/components/preview/PreviewDialog";
+import { ResultGrid } from "@/components/results/ResultGrid";
+import { UploadPanel } from "@/components/upload/UploadPanel";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Toaster } from "@/components/ui/sonner";
+import { downloadBatchAsZip, downloadBlob } from "@/lib/download/files";
 import {
   createTranslator,
   getInitialLocale,
   setStoredLocale,
-} from "./lib/i18n";
-import { downloadBatchAsZip, downloadBlob } from "./lib/download/files";
-import { BatchQueue } from "./lib/queue/batchQueue";
-import { ProcessingError } from "./lib/watermark/file";
-import { WatermarkProcessor } from "./lib/watermark/process";
-import type { BatchResult, Locale } from "./types";
+} from "@/lib/i18n";
+import { BatchQueue } from "@/lib/queue/batchQueue";
+import { ProcessingError } from "@/lib/watermark/file";
+import { WatermarkProcessor } from "@/lib/watermark/process";
+import type { BatchResult, Locale } from "@/types";
 
 function revokeResultUrls(results: BatchResult[]): void {
   results.forEach((result) => {
@@ -41,9 +54,9 @@ export default function App() {
     null,
   );
   const [isZipping, setIsZipping] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
   const queueRef = useRef<BatchQueue | null>(null);
   const resultsRef = useRef<BatchResult[]>([]);
+  const deferredResults = useDeferredValue(results);
   const t = useMemo(() => createTranslator(locale), [locale]);
 
   useEffect(() => {
@@ -51,16 +64,20 @@ export default function App() {
     const queue = new BatchQueue({
       processor: (file) => processor.removeGeminiWatermark(file),
       onUpdate: (nextResult) => {
-        setResults((current) => {
-          const index = current.findIndex((item) => item.id === nextResult.id);
+        startTransition(() => {
+          setResults((current) => {
+            const index = current.findIndex(
+              (item) => item.id === nextResult.id,
+            );
 
-          if (index === -1) {
-            return [...current, nextResult];
-          }
+            if (index === -1) {
+              return [...current, nextResult];
+            }
 
-          const nextResults = [...current];
-          nextResults[index] = nextResult;
-          return nextResults;
+            const nextResults = [...current];
+            nextResults[index] = nextResult;
+            return nextResults;
+          });
         });
       },
     });
@@ -88,34 +105,55 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute("lang", locale);
-    document.documentElement.setAttribute("data-theme", "caramellatte");
-  }, [locale]);
+    document.title = `${t("appName")} · ${t("heroTitle")}`;
+  }, [locale, t]);
+
+  const handlePaste = useEffectEvent((event: ClipboardEvent) => {
+    const pastedFiles = extractClipboardFiles(event);
+
+    if (pastedFiles.length === 0) {
+      return;
+    }
+
+    event.preventDefault();
+    enqueueFiles(pastedFiles);
+  });
 
   useEffect(() => {
-    const handlePaste = (event: ClipboardEvent) => {
-      const pastedFiles = extractClipboardFiles(event);
-
-      if (pastedFiles.length === 0) {
-        return;
-      }
-
-      event.preventDefault();
-      queueRef.current?.enqueue(pastedFiles);
+    const listener = (event: ClipboardEvent) => {
+      handlePaste(event);
     };
 
-    window.addEventListener("paste", handlePaste);
+    window.addEventListener("paste", listener);
 
     return () => {
-      window.removeEventListener("paste", handlePaste);
+      window.removeEventListener("paste", listener);
     };
-  }, []);
+  }, [handlePaste]);
 
-  const total = results.length;
-  const pending = results.filter(
-    (result) => result.state === "pending" || result.state === "processing",
-  ).length;
-  const success = results.filter((result) => result.state === "success").length;
-  const error = results.filter((result) => result.state === "error").length;
+  const { total, pending, success, error } = useMemo(() => {
+    return results.reduce(
+      (accumulator, result) => {
+        accumulator.total += 1;
+
+        if (result.state === "pending" || result.state === "processing") {
+          accumulator.pending += 1;
+        }
+
+        if (result.state === "success") {
+          accumulator.success += 1;
+        }
+
+        if (result.state === "error") {
+          accumulator.error += 1;
+        }
+
+        return accumulator;
+      },
+      { total: 0, pending: 0, success: 0, error: 0 },
+    );
+  }, [results]);
+
   const isBusy = pending > 0;
 
   const handleLocaleChange = (nextLocale: Locale): void => {
@@ -145,7 +183,7 @@ export default function App() {
       const fallback = new ProcessingError("zip-failed", t("zipFailed"));
       const nextError = error instanceof ProcessingError ? error : fallback;
 
-      setNotice(
+      toast.error(
         nextError.code === "zip-failed" ? t("zipFailed") : nextError.message,
       );
     } finally {
@@ -153,94 +191,106 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    if (!notice) {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => {
-      setNotice(null);
-    }, 3200);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [notice]);
-
   return (
-    <div className="banana-app min-h-screen">
-      <div className="navbar mx-auto w-full max-w-6xl px-4 py-5 sm:px-6">
-        <div className="flex-1">
+    <div className="banana-shell">
+      <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-6 px-4 py-4 sm:px-6 sm:py-6 lg:gap-8">
+        <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="banana-brand-mark flex size-11 items-center justify-center rounded-box border border-base-100/40 shadow-sm">
-              <img src="/banana-mark.svg" alt="" className="size-7" />
+            <div className="banana-brand-mark flex size-11 items-center justify-center rounded-[1.2rem] border border-white/50">
+              <img src="/banana-mark.svg" alt="" className="size-6" />
             </div>
-            <p className="text-lg font-semibold text-base-content">
+            <p className="text-base font-semibold tracking-tight text-foreground">
               {t("appName")}
             </p>
           </div>
-        </div>
-        <div className="flex-none">
+
           <LanguageSwitcher
             locale={locale}
             onChange={handleLocaleChange}
             t={t}
           />
-        </div>
-      </div>
-
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-12 sm:px-6">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight text-base-content md:text-3xl">
-            {t("heroTitle")}
-          </h1>
-          <p className="max-w-2xl text-sm leading-relaxed text-base-content/60 md:text-base">
-            {t("heroSubtitle")}
-          </p>
         </header>
 
-        <UploadPanel onFilesSelected={enqueueFiles} isBusy={isBusy} t={t} />
+        <main className="flex flex-col gap-6 lg:gap-8">
+          <section className="w-full space-y-3">
+            <h1 className="font-display text-[clamp(2.4rem,6vw,4.4rem)] leading-[0.92] tracking-[-0.05em] text-foreground">
+              {t("heroTitle")}
+            </h1>
+            <p className="max-w-3xl text-sm/7 text-muted-foreground sm:text-base/7">
+              {t("heroSubtitle")}
+            </p>
+          </section>
 
-        <StatusSummary
-          total={total}
-          pending={pending}
-          success={success}
-          error={error}
-          isBusy={isBusy}
-          canDownloadAll={success > 0}
-          onDownloadAll={() => {
-            void handleDownloadAll();
-          }}
-          onClearAll={handleClear}
-          isZipping={isZipping}
-          t={t}
-        />
+          <UploadPanel onFilesSelected={enqueueFiles} isBusy={isBusy} t={t} />
 
-        {results.length > 0 ? (
-          <ResultGrid
-            results={results}
+          <StatusSummary
+            total={total}
+            pending={pending}
+            success={success}
+            error={error}
+            isBusy={isBusy}
+            canDownloadAll={success > 0}
+            onDownloadAll={() => {
+              void handleDownloadAll();
+            }}
+            onClearAll={handleClear}
+            isZipping={isZipping}
             t={t}
-            onPreview={setSelectedPreviewId}
-            onDownload={handleDownloadOne}
           />
-        ) : null}
-      </main>
+
+          {error > 0 ? (
+            <Alert className="rounded-[1.5rem] border border-destructive/20 bg-destructive/6">
+              <TriangleAlertIcon />
+              <AlertTitle>{t("partialFailureTitle")}</AlertTitle>
+              <AlertDescription>
+                <p>{t("partialFailureText")}</p>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {deferredResults.length > 0 ? (
+            <section className="space-y-3">
+              <div className="flex items-end justify-between gap-4">
+                <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                  {t("resultsTitle")}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {success}/{total}
+                </p>
+              </div>
+
+              <ResultGrid
+                results={deferredResults}
+                t={t}
+                onPreview={setSelectedPreviewId}
+                onDownload={handleDownloadOne}
+              />
+            </section>
+          ) : null}
+        </main>
+
+        <footer className="border-t border-border/60 pt-4 text-sm text-muted-foreground">
+          <a
+            href="https://github.com/RuochenLyu/gemini-image-cleaner"
+            target="_blank"
+            rel="noreferrer"
+            className="transition-colors hover:text-foreground"
+          >
+            GitHub
+          </a>
+        </footer>
+      </div>
 
       <PreviewDialog
         selectedId={selectedPreviewId}
         results={results}
         onClose={() => setSelectedPreviewId(null)}
         onSelect={setSelectedPreviewId}
+        onDownload={handleDownloadOne}
         t={t}
       />
 
-      {notice ? (
-        <div className="toast toast-end toast-bottom">
-          <div className="alert border border-error/20 bg-base-100 text-base-content shadow-lg">
-            <span>{notice}</span>
-          </div>
-        </div>
-      ) : null}
+      <Toaster position="bottom-right" />
     </div>
   );
 }

@@ -17,6 +17,7 @@ npm run dev
 - `references/`：只读参考实现
 - `public/`：品牌资源和 mask 图片
 - `src/components/`：UI 组件
+- `src/components/ui/`：`shadcn/ui` 基础组件源码
 - `src/lib/`：业务逻辑与工具函数
 - `src/workers/`：Web Worker 入口
 - `src/test/`：单测
@@ -24,6 +25,7 @@ npm run dev
 ## 开发原则
 
 - 保持文件可读，避免把 UI、状态、算法全部混在一个组件里。
+- 当前 UI 基线基于 `shadcn/ui + Tailwind CSS v4`，新增界面优先复用 `src/components/ui/` 和语义化 token。
 - 任何新增功能都必须确认仍然符合“纯前端、本地处理、无后端”的边界。
 - 改动算法、目录结构、构建命令或部署说明时，要同步更新 `README` 和 `docs/`。
 - 不要把大段二进制内容写入 TypeScript 源码，优先放在 `public/`。

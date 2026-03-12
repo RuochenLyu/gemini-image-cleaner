@@ -1,6 +1,9 @@
+import { LoaderCircleIcon } from "lucide-react";
 import { useRef, useState } from "react";
-import { ACCEPT_ATTRIBUTE } from "../../lib/watermark/constants";
-import type { Translator } from "../../lib/i18n";
+
+import { ACCEPT_ATTRIBUTE } from "@/lib/watermark/constants";
+import type { Translator } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 interface UploadPanelProps {
   onFilesSelected: (files: File[]) => void;
@@ -8,7 +11,7 @@ interface UploadPanelProps {
   t: Translator;
 }
 
-export function UploadPanel({ onFilesSelected, t }: UploadPanelProps) {
+export function UploadPanel({ onFilesSelected, isBusy, t }: UploadPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -27,15 +30,21 @@ export function UploadPanel({ onFilesSelected, t }: UploadPanelProps) {
   };
 
   return (
-    <section>
+    <section className="banana-panel rounded-[1.6rem] border p-5 sm:p-6">
+      <div className="space-y-1">
+        <h2 className="text-base font-semibold tracking-tight text-foreground">
+          {t("uploadTitle")}
+        </h2>
+        <p className="text-sm/6 text-muted-foreground">{t("uploadHint")}</p>
+      </div>
+
       <button
         type="button"
-        className={[
-          "flex min-h-[12rem] w-full cursor-pointer flex-col items-center justify-center gap-4 rounded-box border-2 border-dashed px-6 py-8 text-center transition duration-200 hover:-translate-y-0.5 hover:shadow-lg",
-          isDragging
-            ? "banana-dropzone-active"
-            : "banana-dropzone hover:border-primary/40",
-        ].join(" ")}
+        className={cn(
+          "banana-dropzone mt-4 flex min-h-[14rem] w-full flex-col items-center justify-center gap-4 rounded-[1.3rem] border border-dashed px-6 py-8 text-center focus-visible:ring-4 focus-visible:ring-ring/40",
+        )}
+        data-dragging={isDragging}
+        aria-busy={isBusy}
         onClick={() => inputRef.current?.click()}
         onDragEnter={(event) => {
           event.preventDefault();
@@ -60,21 +69,30 @@ export function UploadPanel({ onFilesSelected, t }: UploadPanelProps) {
           consumeFiles(event.dataTransfer.files);
         }}
       >
-        <span className="text-4xl">🍌</span>
-
-        <div className="space-y-1">
-          <p className="text-lg font-semibold text-base-content">
-            {t("uploadDropTitle")}
+        <span className="banana-dropzone-mark text-4xl">🍌</span>
+        <div className="space-y-2">
+          <p className="text-lg font-medium text-foreground">
+            {isDragging ? t("uploadDropReady") : t("uploadDropTitle")}
           </p>
-          <p className="text-sm text-base-content/60">
+          <p className="max-w-md text-sm/6 text-muted-foreground">
             {t("uploadDropSubtitle")}
           </p>
         </div>
-
-        <p className="text-xs text-base-content/40">
-          JPG · PNG · WEBP · {t("privacyBadge")}
-        </p>
+        <div className="text-xs text-muted-foreground">
+          {isBusy ? (
+            <span className="inline-flex items-center gap-2">
+              <LoaderCircleIcon className="size-3.5 animate-spin" />
+              {t("uploadBusy")}
+            </span>
+          ) : (
+            <span>{t("uploadFormats")}</span>
+          )}
+        </div>
       </button>
+
+      <p className="mt-3 text-xs text-muted-foreground">
+        {t("pasteHint")} · {t("privacyBadge")}
+      </p>
 
       <input
         ref={inputRef}

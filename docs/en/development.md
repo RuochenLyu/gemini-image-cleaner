@@ -23,6 +23,7 @@ npm run build
 
 ## Notes
 
+- The current UI baseline uses `shadcn/ui + Tailwind CSS v4`. Prefer shared primitives in `src/components/ui/` and semantic tokens for new interface work.
 - Keep the project local-only. Do not add image upload endpoints.
 - Keep Chinese docs as the source version and update the English mirror in the same change.
 - Store heavy binary assets in `public/` instead of embedding them in TypeScript files.

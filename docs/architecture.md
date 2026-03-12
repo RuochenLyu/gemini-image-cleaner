@@ -10,6 +10,8 @@
   负责页面状态、批处理摘要、语言切换、预览弹窗和下载动作。
 - `src/components/`
   负责上传区、摘要区、结果卡片和大图查看等 UI 组件。
+- `src/components/ui/`
+  负责 `shadcn/ui` 基础组件与 Radix primitives 的项目内源码副本。
 - `src/lib/watermark/`
   负责图片读取、mask alpha map 生成、worker 调度和最终 PNG 导出。
 - `src/lib/queue/`

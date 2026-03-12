@@ -30,6 +30,9 @@ describe("App", () => {
     const input = container.querySelector('input[type="file"]');
 
     expect(input).not.toBeNull();
+    expect(
+      screen.queryByRole("heading", { name: "Results" }),
+    ).not.toBeInTheDocument();
 
     fireEvent.change(input as HTMLInputElement, {
       target: {
@@ -41,7 +44,10 @@ describe("App", () => {
       expect(screen.getAllByText("Complete").length).toBeGreaterThan(0);
     });
 
-    expect(screen.getByText("640 × 480")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Results" }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("640 × 480").length).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: "Download PNG" })).toBeEnabled();
   });
 });

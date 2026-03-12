@@ -1,5 +1,6 @@
-import type { BatchResult, ErrorCode } from "../../types";
-import type { Translator } from "../../lib/i18n";
+import type { Translator } from "@/lib/i18n";
+import type { BatchResult, ErrorCode } from "@/types";
+
 import { ResultCard } from "./ResultCard";
 
 interface ResultGridProps {
@@ -27,21 +28,22 @@ export function ResultGrid({
   }
 
   return (
-    <section aria-label={t("resultsTitle")}>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {results.map((result) => (
-          <ResultCard
-            key={result.id}
-            result={result}
-            t={t}
-            onPreview={onPreview}
-            onDownload={onDownload}
-            errorMessage={
-              result.errorCode ? t(errorKeyMap[result.errorCode]) : result.error
-            }
-          />
-        ))}
-      </div>
+    <section
+      aria-label={t("resultsTitle")}
+      className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+    >
+      {results.map((result) => (
+        <ResultCard
+          key={result.id}
+          result={result}
+          t={t}
+          onPreview={onPreview}
+          onDownload={onDownload}
+          errorMessage={
+            result.errorCode ? t(errorKeyMap[result.errorCode]) : result.error
+          }
+        />
+      ))}
     </section>
   );
 }

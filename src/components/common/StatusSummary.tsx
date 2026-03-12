@@ -1,4 +1,8 @@
-import type { Translator } from "../../lib/i18n";
+import { DownloadIcon, LoaderCircleIcon, Trash2Icon } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import type { Translator } from "@/lib/i18n";
 
 interface StatusSummaryProps {
   total: number;
@@ -15,7 +19,9 @@ interface StatusSummaryProps {
 
 export function StatusSummary({
   total,
+  pending,
   success,
+  error,
   isBusy,
   canDownloadAll,
   onDownloadAll,
@@ -27,40 +33,65 @@ export function StatusSummary({
     return null;
   }
 
-  return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-3">
-        {isBusy ? (
-          <span className="loading loading-spinner loading-sm text-primary" />
-        ) : (
-          <span className="inline-block size-2 rounded-full bg-success" />
-        )}
-        <p className="text-sm font-medium text-base-content">
-          {isBusy ? t("queueProcessing") : t("queueFinished")}
-        </p>
-        <span className="text-sm text-base-content/50">
-          {success}/{total}
-        </span>
-      </div>
+  const processed = success + error;
+  const progress = Math.round((processed / total) * 100);
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          className="btn btn-accent btn-sm"
-          disabled={!canDownloadAll || isZipping}
-          onClick={onDownloadAll}
-        >
-          {isZipping ? t("zipping") : t("downloadAll")}
-        </button>
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          disabled={isBusy}
-          onClick={onClearAll}
-        >
-          {t("clearAll")}
-        </button>
+  return (
+    <section className="banana-panel rounded-[1.6rem] border p-5 sm:p-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            {isBusy ? (
+              <LoaderCircleIcon className="size-4 animate-spin text-primary" />
+            ) : (
+              <span className="size-2.5 rounded-full bg-success" />
+            )}
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                {isBusy ? t("queueProcessing") : t("queueFinished")}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {success}/{total}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span>
+              {t("summaryPending")} {pending}
+            </span>
+            <span>
+              {t("summarySuccess")} {success}
+            </span>
+            <span>
+              {t("summaryError")} {error}
+            </span>
+          </div>
+        </div>
+
+        <Progress value={progress} />
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            className="w-full sm:flex-1"
+            disabled={!canDownloadAll || isZipping}
+            onClick={onDownloadAll}
+          >
+            <DownloadIcon data-icon="inline-start" />
+            {isZipping ? t("zipping") : t("downloadAll")}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            disabled={isBusy}
+            onClick={onClearAll}
+          >
+            <Trash2Icon data-icon="inline-start" />
+            {t("clearAll")}
+          </Button>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -1,6 +1,14 @@
-# 🍌 Banana Cleaner
+# 🍌 Gemini Image Cleaner
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-banana.aix4u.com-f3d46b?style=flat-square)](https://banana.aix4u.com)
+[![License](https://img.shields.io/badge/License-MIT-1f6feb?style=flat-square)](./LICENSE)
+[![React](https://img.shields.io/badge/React-19-149eca?style=flat-square)](https://react.dev/)
+[![Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare%20Pages-f38020?style=flat-square)](https://banana.aix4u.com)
 
 一个可部署到 Cloudflare Pages 的 Gemini 图片去水印单页工具。支持批量上传、本地处理、本地预览和 ZIP 下载，整个流程都在浏览器内完成，不经过后端。
+
+在线体验：<https://banana.aix4u.com>
+English README: [README.en.md](./README.en.md)
 
 ## 功能特点
 
@@ -8,6 +16,7 @@
 - 基于现有 Gemini 去水印算法，将重计算放入 Web Worker，避免主线程卡顿。
 - 结果区使用卡片栅格，支持单张下载、结果预览、原图/结果图切换、上一张/下一张浏览。
 - 支持批量 ZIP 下载，输出文件统一命名为 `*-unwatermarked.png`。
+- 前端界面采用浅色香蕉系视觉和 `shadcn/ui` 组件体系，交互聚焦上传、处理、预览和下载。
 - 界面语言支持简体中文、英文、日文；按浏览器语言自动匹配，未命中时回退英文。
 - 项目以 GitHub 开源协作为目标，文档、目录结构和代码都按长期可读性维护。
 
@@ -16,7 +25,7 @@
 - React 19
 - TypeScript
 - Vite
-- Tailwind CSS + daisyUI
+- Tailwind CSS v4 + shadcn/ui（Radix UI primitives）
 - JSZip
 - Vitest + Testing Library
 
@@ -48,6 +57,8 @@ npm run format:check
 3. 构建命令填写 `npm run build`。
 4. 输出目录填写 `dist`。
 5. Node 版本建议使用 20+。
+
+当前生产地址：<https://banana.aix4u.com>
 
 因为项目是纯静态前端，不需要配置 Functions、KV、D1 或任何图片上传服务。
 
