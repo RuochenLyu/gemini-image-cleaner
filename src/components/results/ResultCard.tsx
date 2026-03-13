@@ -1,4 +1,5 @@
 import { DownloadIcon, EyeIcon, LoaderCircleIcon } from "lucide-react";
+import { useCallback, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,19 @@ export function ResultCard({
   const stateLabel = stateLabelMap[result.state];
   const isSuccess = result.state === "success";
 
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const prevSrcRef = useRef(previewUrl);
+
+  // Reset loaded state when the image source changes
+  if (prevSrcRef.current !== previewUrl) {
+    prevSrcRef.current = previewUrl;
+    setImageLoaded(false);
+  }
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true);
+  }, []);
+
   return (
     <article
       className={cn(
@@ -69,15 +83,24 @@ export function ResultCard({
     >
       <div className="banana-result-frame relative aspect-[4/3] overflow-hidden">
         {previewUrl ? (
-          <img
-            src={previewUrl}
-            alt={result.originalFile.name}
-            loading="lazy"
-            className={cn(
-              "h-full w-full object-cover transition-transform duration-280 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/result-card:-translate-y-0.5",
-              result.state === "processing" && "saturate-75",
+          <>
+            {!imageLoaded && (
+              <Skeleton className="absolute inset-0 flex items-center justify-center rounded-none bg-primary/10 text-5xl">
+                <span>🍌</span>
+              </Skeleton>
             )}
-          />
+            <img
+              src={previewUrl}
+              alt={result.originalFile.name}
+              loading="lazy"
+              onLoad={handleImageLoad}
+              className={cn(
+                "h-full w-full object-cover transition-[transform,opacity] duration-280 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/result-card:-translate-y-0.5",
+                result.state === "processing" && "saturate-75",
+                imageLoaded ? "opacity-100" : "opacity-0",
+              )}
+            />
+          </>
         ) : (
           <Skeleton className="flex h-full w-full items-center justify-center rounded-none bg-primary/10 text-5xl">
             <span>🍌</span>

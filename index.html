@@ -110,6 +110,16 @@
         <p>This application requires JavaScript to run. Please enable JavaScript and reload the page.</p>
       </div>
     </noscript>
+    <script>
+      // Set lang before CSS evaluates to prevent font flash for CJK locales
+      (function(){
+        var s=localStorage.getItem("banana-cleaner-locale");
+        if(s){document.documentElement.lang=s;return}
+        var n=navigator.language||"";
+        if(n.startsWith("zh"))document.documentElement.lang="zh-CN";
+        else if(n.startsWith("ja"))document.documentElement.lang="ja-JP";
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
