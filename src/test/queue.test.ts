@@ -16,6 +16,7 @@ describe("batch queue", () => {
         downloadName: `${file.name}-unwatermarked.png`,
         width: 300,
         height: 200,
+        watermarkDetected: true,
       };
     };
 
@@ -53,6 +54,7 @@ describe("batch queue", () => {
         downloadName: "sample-unwatermarked.png",
         width: 1200,
         height: 900,
+        watermarkDetected: true,
       }),
     );
 

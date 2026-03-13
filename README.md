@@ -13,7 +13,7 @@ English README: [README.en.md](./README.en.md)
 ## 功能特点
 
 - 支持点击上传、拖拽上传、粘贴上传，并且三种方式都支持多图导入。
-- 基于现有 Gemini 去水印算法，将重计算放入 Web Worker，避免主线程卡顿。
+- 多阶段去水印管线：智能尺寸选择、水印检测、Gain 校准、轮廓修正，重计算放入 Web Worker。
 - 结果区使用卡片栅格，支持单张下载、结果预览、原图/结果图切换、上一张/下一张浏览。
 - 支持批量 ZIP 下载，输出文件统一命名为 `*-unwatermarked.png`。
 - 前端界面采用浅色香蕉系视觉和 `shadcn/ui` 组件体系，交互聚焦上传、处理、预览和下载。
@@ -64,13 +64,15 @@ npm run format:check
 
 ## 算法说明
 
-项目核心算法参考当前仓库的 [`references/engine.js`](./references/engine.js)，本实现将其拆分为：
+去水印核心基于 Reverse Alpha Blending，并在此基础上增加了多阶段增强管线：
 
-- 主线程文件读取和状态协调
-- Web Worker 像素恢复
-- 本地 PNG 导出
+1. **智能尺寸选择** — 同时加载 48px 和 96px 两套 mask，通过 NCC 得分自动选择匹配度更高的尺寸。
+2. **水印存在检测** — 计算空间相关性和梯度相关性，未检测到水印时直接返回原图。
+3. **Alpha Gain 校准** — 粗搜 + 精搜两轮寻找最优 gain，含近黑保护机制。
+4. **轮廓二次修正** — 对梯度残留较高的边缘区域做混合补偿。
+5. **亚像素对齐**（可选）— 双线性插值平移和缩放，精确对齐 mask 与实际水印。
 
-核心思路仍然是对 Gemini 右下角水印区域执行 Reverse Alpha Blending。
+详细说明参见 [算法文档](./docs/algorithm.md)。早期参考实现保留在 [`references/engine.js`](./references/engine.js)。
 
 ## 文档
 

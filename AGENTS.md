@@ -9,7 +9,7 @@
 
 - `references/`：历史实现的参考代码，只读；除非参考源本身变化，否则不要修改。
 - `src/components/`：UI 组件目录，组件职责保持聚焦、可组合。
-- `src/lib/watermark/`：去水印算法、文件辅助逻辑和处理器编排。
+- `src/lib/watermark/`：去水印算法（engine、detection、calibration、alignment）、文件辅助逻辑和处理器编排。
 - `src/lib/queue/`：批处理队列逻辑。
 - `src/lib/i18n/`：语言检测与翻译文案。
 - `src/workers/`：仅放 Web Worker 入口；重像素计算必须放在主线程之外。

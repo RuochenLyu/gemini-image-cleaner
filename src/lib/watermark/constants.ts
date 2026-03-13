@@ -23,7 +23,24 @@ export interface WatermarkSizing {
 export function getWatermarkSizing(
   width: number,
   height: number,
+  overrideLogoSize?: 48 | 96,
 ): WatermarkSizing {
+  if (overrideLogoSize === 48) {
+    return {
+      logoSize: 48,
+      marginRight: 32,
+      marginBottom: 32,
+    };
+  }
+
+  if (overrideLogoSize === 96) {
+    return {
+      logoSize: 96,
+      marginRight: 64,
+      marginBottom: 64,
+    };
+  }
+
   if (width > 1024 && height > 1024) {
     return {
       logoSize: 96,

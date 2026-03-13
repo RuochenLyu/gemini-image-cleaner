@@ -12,7 +12,7 @@ Live demo: <https://banana.aix4u.com>
 ## Highlights
 
 - Multi-image upload through click, drag and drop, or paste.
-- Local-only watermark removal powered by a Web Worker.
+- Multi-stage watermark removal pipeline: smart size selection, detection, gain calibration, and contour correction — all running inside a Web Worker.
 - Result cards with preview, processed/original toggle, and single-file download.
 - Batch ZIP download with consistent `*-unwatermarked.png` filenames.
 - A light banana-toned UI built on `shadcn/ui`, focused on upload, processing, preview, and download.

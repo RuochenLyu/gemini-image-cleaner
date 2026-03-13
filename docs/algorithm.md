@@ -27,12 +27,66 @@ Composite = Original × (1 - α) + Watermark × α
 Original = (Composite - Watermark × α) / (1 - α)
 ```
 
-## 当前实现
+## 处理管线
 
-- 从 mask PNG 中提取亮度，生成 `Float32Array alpha map`
-- 对右下角指定区域逐像素恢复 RGB 值
-- alpha 值太低的像素直接跳过，避免无意义计算
-- alpha 值过高时做上限裁剪，避免分母过小导致异常放大
+去水印在 Web Worker 中执行，分为以下阶段：
+
+### 1. 智能尺寸选择
+
+同时加载 48px 和 96px 两套 alpha map，分别计算空间相关性和梯度相关性得分，选择匹配度更高的尺寸。这样即使图片分辨率处于模糊地带，也能自动选中最合适的 mask。
+
+### 2. 水印存在检测
+
+通过 Normalized Cross-Correlation (NCC) 计算两个指标：
+
+- **空间相关性**：图片亮度与 alpha map 的 NCC
+- **梯度相关性**：图片 Sobel 梯度与 alpha map 梯度的 NCC
+
+任一指标超过阈值（spatial ≥ 0.3 或 gradient ≥ 0.12）判定为存在水印；否则直接返回原图，避免对无水印图片产生不必要的修改。
+
+### 3. Reverse Alpha Blending
+
+对水印区域逐像素执行反向 alpha 混合：
+
+- **噪声地板（noiseFloor）**：alpha 值低于噪声地板时跳过，避免对几乎透明的区域做无意义计算。默认 3/255。
+- **增益（gain）**：实际使用的 alpha = min(rawAlpha × gain, alphaCap)。
+- **上限裁剪（alphaCap）**：防止分母过小导致异常放大。默认 0.99。
+
+### 4. Gain 校准
+
+基础去除（gain=1）后，通过两轮��索寻找最优 gain：
+
+- **粗搜**：gain 从 1.05 到 2.6，步进 0.1
+- **精搜**：围绕粗搜最优结果 ±0.05，步进 0.01
+
+评估标准是去除后区域的梯度残留量——残留越低说明水印边界越干净。
+
+**近黑保护**：如果某个 gain 导致区域内近黑像素（亮度 < 10）的比例增加超过 5%，自动回退，防止过度校正把暗区推成纯黑。
+
+### 5. 轮廓二次修正
+
+最优 gain 去除后，再次计算区域 Sobel 梯度。如果局部最大梯度 ≥ 0.42，说明水印边缘仍有残留。对这些高梯度像素使用稍高的 gain 重新计算，并与原结果按梯度强度做线性混合。
+
+### 6. 亚像素对齐（可选，默认关闭）
+
+当 mask 与实际水印存在亚像素级偏移时，提供以下能力：
+
+- **双线性平移**：在 dx/dy ∈ [-0.5, +0.5] 范围内搜索最佳偏移
+- **双线性缩放**：支持 0.99/1.0/1.01 三档微调
+- **精细搜索**：围绕初始结果再做一轮更小步长的扫描
+- **自适应模板搜索**：粗细两轮 NCC 扫描，适用于水印位置不在预期位置的情况
+
+## 模块文件
+
+| 文件 | 职责 |
+| --- | --- |
+| `engine.ts` | alpha map 提取、Reverse Alpha Blending 核心 |
+| `detection.ts` | NCC、Sobel 梯度、水印存在检测、尺寸选择 |
+| `calibration.ts` | Gain 搜索、近黑保护、gain 应用 |
+| `alignment.ts` | 双线性插值平移/缩放、对齐搜索、模板匹配 |
+| `constants.ts` | mask 路径、尺寸规则、水印区域计算 |
+| `process.ts` | 主线程编排：加载 alpha map、调度 Worker、组装结果 |
+| `watermarkWorker.ts` | Worker 内处理管线入口 |
 
 ## 为什么放到 Worker
 
@@ -45,3 +99,4 @@ Original = (Composite - Watermark × α) / (1 - α)
 - 统一导出 PNG
 - 保持与原图完全一致的宽高
 - 下载文件名规则固定为：原文件名 + `-unwatermarked.png`
+- 未检测到水印时返回原图，不报错

@@ -15,13 +15,23 @@ export function extractAlphaMap(imageData: ImageData): Float32Array {
   return alphaMap;
 }
 
+export interface RestoreOptions {
+  noiseFloor?: number;
+  gain?: number;
+  alphaCap?: number;
+}
+
 export function restoreWatermarkPixels(
   pixels: Uint8ClampedArray,
   width: number,
   height: number,
   alphaMap: Float32Array,
   rect: WatermarkRect,
+  options?: RestoreOptions,
 ): Uint8ClampedArray {
+  const noiseFloor = options?.noiseFloor ?? 3 / 255;
+  const gain = options?.gain ?? 1.0;
+  const alphaCap = options?.alphaCap ?? 0.99;
   const nextPixels = pixels;
 
   for (let row = 0; row < rect.height; row += 1) {
@@ -34,14 +44,13 @@ export function restoreWatermarkPixels(
       }
 
       const pixelOffset = (pixelY * width + pixelX) * 4;
-      let alpha = alphaMap[row * rect.width + column];
+      const rawAlpha = alphaMap[row * rect.width + column];
 
-      if (alpha < 0.002) {
+      if (rawAlpha - noiseFloor < 0.002) {
         continue;
       }
 
-      alpha = Math.min(alpha, 0.99);
-
+      const alpha = Math.min(rawAlpha * gain, alphaCap);
       const inverseAlpha = 1 - alpha;
 
       for (let channel = 0; channel < 3; channel += 1) {
@@ -55,6 +64,6 @@ export function restoreWatermarkPixels(
   return nextPixels;
 }
 
-function clampToByte(value: number): number {
+export function clampToByte(value: number): number {
   return Math.max(0, Math.min(255, Math.round(value)));
 }

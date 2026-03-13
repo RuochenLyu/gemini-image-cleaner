@@ -8,11 +8,22 @@ export type ErrorCode =
   | "processing-failed"
   | "zip-failed";
 
+export interface WatermarkMetadata {
+  watermarkDetected: boolean;
+  detectedSize: 48 | 96;
+  gainUsed: number;
+  spatialScore: number;
+  gradientScore: number;
+  alignmentOffset: { dx: number; dy: number; scale: number };
+}
+
 export interface ProcessedImage {
   blob: Blob;
   downloadName: string;
   width: number;
   height: number;
+  watermarkDetected: boolean;
+  metadata?: WatermarkMetadata;
 }
 
 export interface BatchResult {
@@ -44,12 +55,15 @@ export interface WorkerProcessRequest {
   pixels: ArrayBuffer;
   alphaMap: ArrayBuffer;
   rect: WatermarkRect;
+  alphaMap48?: ArrayBuffer;
+  alphaMap96?: ArrayBuffer;
 }
 
 export interface WorkerProcessSuccess {
   type: "process-complete";
   id: string;
   pixels: ArrayBuffer;
+  metadata?: WatermarkMetadata;
 }
 
 export interface WorkerProcessError {

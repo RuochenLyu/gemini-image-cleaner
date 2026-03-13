@@ -1,5 +1,6 @@
 import type {
   ProcessedImage,
+  WatermarkMetadata,
   WorkerProcessRequest,
   WorkerResponse,
 } from "../../types";
@@ -38,38 +39,41 @@ export class WatermarkProcessor {
     }
 
     const sourceImageData = await fileToImageData(file);
-    const sizing = getWatermarkSizing(
-      sourceImageData.width,
-      sourceImageData.height,
-    );
-    const rect = getWatermarkRect(
-      sourceImageData.width,
-      sourceImageData.height,
-      sizing,
-    );
-    const alphaMap = await this.getAlphaMap(sizing.logoSize);
-    const pixels = await this.runWorker({
+    const { width, height } = sourceImageData;
+    const sizing = getWatermarkSizing(width, height);
+    const rect = getWatermarkRect(width, height, sizing);
+
+    // Load both alpha maps in parallel
+    const [alphaMap48, alphaMap96] = await Promise.all([
+      this.getAlphaMap(48),
+      this.getAlphaMap(96),
+    ]);
+
+    const result = await this.runWorker({
       type: "process-image",
       id: crypto.randomUUID(),
-      width: sourceImageData.width,
-      height: sourceImageData.height,
+      width,
+      height,
       pixels: sourceImageData.data.slice().buffer,
-      alphaMap: alphaMap.slice().buffer,
+      alphaMap: alphaMap48.slice().buffer,
       rect,
+      alphaMap48: alphaMap48.slice().buffer,
+      alphaMap96: alphaMap96.slice().buffer,
     });
 
-    const processedImageData = new ImageData(
-      sourceImageData.width,
-      sourceImageData.height,
-    );
-    processedImageData.data.set(pixels);
+    const processedImageData = new ImageData(width, height);
+    processedImageData.data.set(result.pixels);
     const blob = await imageDataToPngBlob(processedImageData);
+
+    const watermarkDetected = result.metadata?.watermarkDetected ?? true;
 
     return {
       blob,
       downloadName: createDownloadName(file.name),
-      width: sourceImageData.width,
-      height: sourceImageData.height,
+      width,
+      height,
+      watermarkDetected,
+      metadata: result.metadata,
     };
   }
 
@@ -90,7 +94,9 @@ export class WatermarkProcessor {
     return task;
   }
 
-  private runWorker(request: WorkerProcessRequest): Promise<Uint8ClampedArray> {
+  private runWorker(
+    request: WorkerProcessRequest,
+  ): Promise<{ pixels: Uint8ClampedArray; metadata?: WatermarkMetadata }> {
     return new Promise((resolve, reject) => {
       const handleMessage = (event: MessageEvent<WorkerResponse>) => {
         if (event.data.id !== request.id) {
@@ -113,7 +119,7 @@ export class WatermarkProcessor {
         const workerPixels = new Uint8ClampedArray(event.data.pixels);
         const nextPixels = new Uint8ClampedArray(workerPixels.length);
         nextPixels.set(workerPixels);
-        resolve(nextPixels);
+        resolve({ pixels: nextPixels, metadata: event.data.metadata });
       };
 
       const handleError = () => {
@@ -129,7 +135,11 @@ export class WatermarkProcessor {
 
       this.worker.addEventListener("message", handleMessage);
       this.worker.addEventListener("error", handleError, { once: true });
-      this.worker.postMessage(request, [request.pixels, request.alphaMap]);
+
+      const transferables: ArrayBuffer[] = [request.pixels, request.alphaMap];
+      if (request.alphaMap48) transferables.push(request.alphaMap48);
+      if (request.alphaMap96) transferables.push(request.alphaMap96);
+      this.worker.postMessage(request, transferables);
     });
   }
 }
