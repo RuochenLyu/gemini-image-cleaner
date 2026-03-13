@@ -9,7 +9,6 @@ import type { BatchResult } from "@/types";
 
 interface ResultCardProps {
   result: BatchResult;
-  isFeatured?: boolean;
   t: Translator;
   onPreview: (id: string) => void;
   onDownload: (result: BatchResult) => void;
@@ -40,7 +39,6 @@ const stateClasses: Record<
 
 export function ResultCard({
   result,
-  isFeatured = false,
   t,
   onPreview,
   onDownload,
@@ -55,38 +53,29 @@ export function ResultCard({
 
   const previewUrl = result.previewUrl ?? result.originalUrl;
   const stateLabel = stateLabelMap[result.state];
-  const meta =
-    result.width && result.height
-      ? t("statusMeta", {
-          width: result.width,
-          height: result.height,
-          state: stateLabel,
-        })
-      : stateLabel;
+  const isSuccess = result.state === "success";
 
   return (
     <article
       className={cn(
         "banana-card group/result-card @container overflow-hidden rounded-[1.65rem] border bg-card/95",
         stateClasses[result.state].card,
-        isFeatured && "xl:col-span-2",
+        isSuccess && "cursor-pointer",
       )}
       data-state={result.state}
+      onClick={() => {
+        if (isSuccess) onPreview(result.id);
+      }}
     >
-      <div
-        className={cn(
-          "banana-result-frame relative overflow-hidden",
-          isFeatured ? "aspect-[16/10]" : "aspect-[4/3]",
-        )}
-      >
+      <div className="banana-result-frame relative aspect-[4/3] overflow-hidden">
         {previewUrl ? (
           <img
             src={previewUrl}
             alt={result.originalFile.name}
             loading="lazy"
             className={cn(
-              "h-full w-full object-cover transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/result-card:scale-[1.03]",
-              result.state === "processing" && "scale-[1.02] saturate-75",
+              "h-full w-full object-cover transition-transform duration-280 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/result-card:-translate-y-0.5",
+              result.state === "processing" && "saturate-75",
             )}
           />
         ) : (
@@ -95,10 +84,10 @@ export function ResultCard({
           </Skeleton>
         )}
 
-        <div className="absolute inset-x-4 top-4 flex items-start justify-between gap-3">
+        <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
           <Badge
             className={cn(
-              "rounded-full px-3 py-1",
+              "rounded-full px-2.5 py-0.5 text-xs",
               stateClasses[result.state].badge,
             )}
           >
@@ -107,7 +96,7 @@ export function ResultCard({
           {result.width && result.height ? (
             <Badge
               variant="outline"
-              className="rounded-full border-border/70 bg-background/85 px-3 py-1 backdrop-blur-sm"
+              className="rounded-full border-border/70 bg-background/85 px-2.5 py-0.5 text-xs backdrop-blur-sm"
             >
               {result.width} × {result.height}
             </Badge>
@@ -115,7 +104,7 @@ export function ResultCard({
         </div>
 
         {result.state === "processing" ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background/45 backdrop-blur-[1px]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/45 backdrop-blur-[1px]">
             <LoaderCircleIcon className="size-5 animate-spin text-foreground" />
             <span className="text-sm font-medium text-foreground">
               {t("stateProcessing")}
@@ -124,43 +113,45 @@ export function ResultCard({
         ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 px-5 py-5 @lg:px-6 @lg:py-6">
-        <div className="space-y-2">
-          <h3 className="line-clamp-2 text-base font-semibold text-foreground">
+      <div className="flex items-center gap-3 px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-foreground">
             {result.originalFile.name}
-          </h3>
-          <p
-            className={cn(
-              "text-sm/6",
-              result.state === "error"
-                ? "text-destructive"
-                : "text-muted-foreground",
-            )}
-          >
-            {result.state === "error" ? (errorMessage ?? result.error) : meta}
           </p>
+          {result.state === "error" ? (
+            <p className="truncate text-xs text-destructive">
+              {errorMessage ?? result.error}
+            </p>
+          ) : null}
         </div>
 
-        <div className="mt-auto flex flex-col gap-2 @sm:flex-row @sm:items-center @sm:justify-end">
-          {result.state === "success" ? (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {isSuccess ? (
             <Button
               type="button"
-              variant="outline"
-              className="w-full @sm:w-auto"
-              onClick={() => onPreview(result.id)}
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("openPreview")}
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreview(result.id);
+              }}
             >
-              <EyeIcon data-icon="inline-start" />
-              {t("openPreview")}
+              <EyeIcon />
             </Button>
           ) : null}
           <Button
             type="button"
-            className="w-full @sm:w-auto"
-            disabled={result.state !== "success" || !result.blob}
-            onClick={() => onDownload(result)}
+            variant={isSuccess ? "default" : "ghost"}
+            size="icon-sm"
+            aria-label={t("downloadOne")}
+            disabled={!isSuccess || !result.blob}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownload(result);
+            }}
           >
-            <DownloadIcon data-icon="inline-start" />
-            {t("downloadOne")}
+            <DownloadIcon />
           </Button>
         </div>
       </div>

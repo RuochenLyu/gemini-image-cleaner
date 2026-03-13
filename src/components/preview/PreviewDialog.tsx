@@ -1,5 +1,5 @@
 import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Translator } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import type { BatchResult } from "@/types";
 
 interface PreviewDialogProps {
@@ -32,6 +33,8 @@ export function PreviewDialog({
   t,
 }: PreviewDialogProps) {
   const [mode, setMode] = useState<"processed" | "original">("processed");
+  const [fadeKey, setFadeKey] = useState(0);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const successfulResults = useMemo(() => {
     return results.filter(
@@ -45,9 +48,52 @@ export function PreviewDialog({
   );
   const activeResult = activeIndex >= 0 ? successfulResults[activeIndex] : null;
 
+  const canGoPrev = activeIndex > 0;
+  const canGoNext =
+    activeIndex >= 0 && activeIndex < successfulResults.length - 1;
+
+  const goPrev = useCallback(() => {
+    const previous = successfulResults[activeIndex - 1];
+    if (previous) {
+      setFadeKey((k) => k + 1);
+      onSelect(previous.id);
+    }
+  }, [successfulResults, activeIndex, onSelect]);
+
+  const goNext = useCallback(() => {
+    const next = successfulResults[activeIndex + 1];
+    if (next) {
+      setFadeKey((k) => k + 1);
+      onSelect(next.id);
+    }
+  }, [successfulResults, activeIndex, onSelect]);
+
   useEffect(() => {
     setMode("processed");
   }, [selectedId]);
+
+  // Trigger fade on mode change
+  useEffect(() => {
+    setFadeKey((k) => k + 1);
+  }, [mode]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    if (!selectedId) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft" && canGoPrev) {
+        event.preventDefault();
+        goPrev();
+      } else if (event.key === "ArrowRight" && canGoNext) {
+        event.preventDefault();
+        goNext();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedId, canGoPrev, canGoNext, goPrev, goNext]);
 
   const imageUrl =
     mode === "processed" ? activeResult?.previewUrl : activeResult?.originalUrl;
@@ -64,7 +110,7 @@ export function PreviewDialog({
         <DialogHeader className="gap-4 pr-10">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
-              <DialogTitle className="font-display text-[clamp(1.8rem,3vw,2.8rem)] tracking-[-0.05em]">
+              <DialogTitle className="text-[clamp(1.4rem,2.5vw,2rem)] font-bold tracking-[-0.03em]">
                 {activeResult?.originalFile.name ?? t("previewTitle")}
               </DialogTitle>
               <DialogDescription className="text-sm/6">
@@ -121,35 +167,27 @@ export function PreviewDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={activeIndex <= 0}
-                onClick={() => {
-                  const previous = successfulResults[activeIndex - 1];
-
-                  if (previous) {
-                    onSelect(previous.id);
-                  }
-                }}
+                disabled={!canGoPrev}
+                onClick={goPrev}
               >
                 <ChevronLeftIcon data-icon="inline-start" />
                 {t("previous")}
+                <kbd className="ml-1 hidden text-[10px] text-muted-foreground sm:inline">
+                  ←
+                </kbd>
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={
-                  activeIndex < 0 || activeIndex >= successfulResults.length - 1
-                }
-                onClick={() => {
-                  const next = successfulResults[activeIndex + 1];
-
-                  if (next) {
-                    onSelect(next.id);
-                  }
-                }}
+                disabled={!canGoNext}
+                onClick={goNext}
               >
                 {t("next")}
                 <ChevronRightIcon data-icon="inline-end" />
+                <kbd className="ml-1 hidden text-[10px] text-muted-foreground sm:inline">
+                  →
+                </kbd>
               </Button>
             </div>
           </div>
@@ -157,9 +195,15 @@ export function PreviewDialog({
           <div className="banana-preview-stage flex min-h-[18rem] items-center justify-center overflow-hidden rounded-[1.7rem] border border-border/70">
             {imageUrl ? (
               <img
+                ref={imgRef}
+                key={fadeKey}
                 src={imageUrl}
                 alt={activeResult?.originalFile.name ?? t("previewTitle")}
-                className="max-h-[72vh] w-full object-contain"
+                className={cn(
+                  "max-h-[72vh] w-full object-contain sm:max-h-[72vh]",
+                  "animate-in fade-in duration-300",
+                  "max-h-[50vh] landscape:max-h-[60vh] sm:max-h-[72vh]",
+                )}
               />
             ) : (
               <div className="px-6 text-center text-muted-foreground">

@@ -1,6 +1,7 @@
-import { LoaderCircleIcon } from "lucide-react";
+import { LoaderCircleIcon, UploadIcon } from "lucide-react";
 import { useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { ACCEPT_ATTRIBUTE } from "@/lib/watermark/constants";
 import type { Translator } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -30,68 +31,78 @@ export function UploadPanel({ onFilesSelected, isBusy, t }: UploadPanelProps) {
   };
 
   return (
-    <section className="banana-panel rounded-[1.6rem] border p-5 sm:p-6">
-      <div className="space-y-1">
-        <h2 className="text-base font-semibold tracking-tight text-foreground">
-          {t("uploadTitle")}
-        </h2>
-        <p className="text-sm/6 text-muted-foreground">{t("uploadHint")}</p>
-      </div>
+    <button
+      type="button"
+      className={cn(
+        "banana-dropzone group/drop flex w-full cursor-pointer flex-col items-center justify-center gap-5 rounded-[2rem] px-6 py-8 text-center focus-visible:ring-4 focus-visible:ring-ring/40 sm:px-8 sm:py-10",
+      )}
+      data-dragging={isDragging}
+      aria-busy={isBusy}
+      onClick={() => inputRef.current?.click()}
+      onDragEnter={(event) => {
+        event.preventDefault();
+        setIsDragging(true);
+      }}
+      onDragOver={(event) => {
+        event.preventDefault();
+        setIsDragging(true);
+      }}
+      onDragLeave={(event) => {
+        if (
+          event.currentTarget.contains(event.relatedTarget as Node | null)
+        ) {
+          return;
+        }
 
-      <button
-        type="button"
-        className={cn(
-          "banana-dropzone mt-4 flex min-h-[14rem] w-full flex-col items-center justify-center gap-4 rounded-[1.3rem] border border-dashed px-6 py-8 text-center focus-visible:ring-4 focus-visible:ring-ring/40",
-        )}
-        data-dragging={isDragging}
-        aria-busy={isBusy}
-        onClick={() => inputRef.current?.click()}
-        onDragEnter={(event) => {
-          event.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={(event) => {
-          if (
-            event.currentTarget.contains(event.relatedTarget as Node | null)
-          ) {
-            return;
-          }
+        setIsDragging(false);
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        setIsDragging(false);
+        consumeFiles(event.dataTransfer.files);
+      }}
+    >
+      <img
+        src="/hero-before-after.svg"
+        alt=""
+        aria-hidden="true"
+        className="banana-dropzone-illustration pointer-events-none w-full max-w-[16rem] select-none sm:max-w-[18rem]"
+      />
 
-          setIsDragging(false);
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          setIsDragging(false);
-          consumeFiles(event.dataTransfer.files);
-        }}
-      >
-        <span className="banana-dropzone-mark text-4xl">🍌</span>
-        <div className="space-y-2">
-          <p className="text-lg font-medium text-foreground">
-            {isDragging ? t("uploadDropReady") : t("uploadDropTitle")}
-          </p>
-          <p className="max-w-md text-sm/6 text-muted-foreground">
-            {t("uploadDropSubtitle")}
+      {isBusy ? (
+        <div className="flex items-center gap-2.5">
+          <LoaderCircleIcon className="size-5 animate-spin text-primary" />
+          <p className="text-sm font-medium text-foreground">
+            {t("uploadBusy")}
           </p>
         </div>
-        <div className="text-xs text-muted-foreground">
-          {isBusy ? (
-            <span className="inline-flex items-center gap-2">
-              <LoaderCircleIcon className="size-3.5 animate-spin" />
-              {t("uploadBusy")}
+      ) : isDragging ? (
+        <div className="flex items-center gap-2.5">
+          <UploadIcon className="size-5 text-primary" />
+          <p className="text-sm font-medium text-foreground">
+            {t("uploadDropReady")}
+          </p>
+        </div>
+      ) : (
+        <>
+          <Button
+            asChild
+            size="lg"
+            className="h-12 pointer-events-none rounded-full px-12 text-base group-hover/drop:pointer-events-auto"
+          >
+            <span aria-hidden="true">
+              <UploadIcon className="size-5" />
+              {t("uploadAction")}
             </span>
-          ) : (
-            <span>{t("uploadFormats")}</span>
-          )}
-        </div>
-      </button>
+          </Button>
+          <p className="text-sm text-muted-foreground">
+            {t("uploadDropTitle")}
+          </p>
+        </>
+      )}
 
-      <p className="mt-3 text-xs text-muted-foreground">
-        {t("pasteHint")} · {t("privacyBadge")}
+      <p className="text-xs text-muted-foreground/70">
+        {t("uploadFormats")} · {t("pasteHint")} · {t("privacyBadge")}
       </p>
 
       <input
@@ -102,6 +113,6 @@ export function UploadPanel({ onFilesSelected, isBusy, t }: UploadPanelProps) {
         accept={ACCEPT_ATTRIBUTE}
         onChange={(event) => consumeFiles(event.target.files)}
       />
-    </section>
+    </button>
   );
 }

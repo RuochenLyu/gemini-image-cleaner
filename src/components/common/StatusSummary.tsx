@@ -37,43 +37,25 @@ export function StatusSummary({
   const progress = Math.round((processed / total) * 100);
 
   return (
-    <section className="banana-panel rounded-[1.6rem] border p-5 sm:p-6">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            {isBusy ? (
-              <LoaderCircleIcon className="size-4 animate-spin text-primary" />
-            ) : (
-              <span className="size-2.5 rounded-full bg-success" />
-            )}
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">
-                {isBusy ? t("queueProcessing") : t("queueFinished")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {success}/{total}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span>
-              {t("summaryPending")} {pending}
-            </span>
-            <span>
-              {t("summarySuccess")} {success}
-            </span>
-            <span>
-              {t("summaryError")} {error}
-            </span>
-          </div>
+    <section className="space-y-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2.5">
+          {isBusy ? (
+            <LoaderCircleIcon className="size-3.5 animate-spin text-primary" />
+          ) : (
+            <span className="banana-pulse-dot size-2 rounded-full bg-success" />
+          )}
+          <span className="text-sm font-medium text-foreground">
+            {isBusy ? t("queueProcessing") : t("queueFinished")}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {success}/{total}
+          </span>
         </div>
 
-        <Progress value={progress} />
-
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex items-center gap-2">
           <Button
-            className="w-full sm:flex-1"
+            size="sm"
             disabled={!canDownloadAll || isZipping}
             onClick={onDownloadAll}
           >
@@ -83,7 +65,7 @@ export function StatusSummary({
           <Button
             type="button"
             variant="outline"
-            className="w-full sm:w-auto"
+            size="sm"
             disabled={isBusy}
             onClick={onClearAll}
           >
@@ -92,6 +74,8 @@ export function StatusSummary({
           </Button>
         </div>
       </div>
+
+      <Progress value={progress} />
     </section>
   );
 }

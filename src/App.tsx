@@ -117,6 +117,7 @@ export default function App() {
 
     event.preventDefault();
     enqueueFiles(pastedFiles);
+    toast.success(t("pasteAdded", { count: pastedFiles.length }));
   });
 
   useEffect(() => {
@@ -213,7 +214,7 @@ export default function App() {
 
         <main className="flex flex-col gap-6 lg:gap-8">
           <section className="w-full space-y-3">
-            <h1 className="font-display text-[clamp(2.4rem,6vw,4.4rem)] leading-[0.92] tracking-[-0.05em] text-foreground">
+            <h1 className="text-[clamp(2.4rem,6vw,4.4rem)] font-bold leading-[0.92] tracking-[-0.04em] text-foreground">
               {t("heroTitle")}
             </h1>
             <p className="max-w-3xl text-sm/7 text-muted-foreground sm:text-base/7">
@@ -250,15 +251,6 @@ export default function App() {
 
           {deferredResults.length > 0 ? (
             <section className="space-y-3">
-              <div className="flex items-end justify-between gap-4">
-                <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                  {t("resultsTitle")}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  {success}/{total}
-                </p>
-              </div>
-
               <ResultGrid
                 results={deferredResults}
                 t={t}
@@ -269,7 +261,7 @@ export default function App() {
           ) : null}
         </main>
 
-        <footer className="border-t border-border/60 pt-4 text-sm text-muted-foreground">
+        <footer className="flex items-center justify-between border-t border-border/60 pt-4 text-sm text-muted-foreground">
           <a
             href="https://github.com/RuochenLyu/gemini-image-cleaner"
             target="_blank"
@@ -278,6 +270,10 @@ export default function App() {
           >
             GitHub
           </a>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-1.5 rounded-full bg-success" />
+            {t("privacyBadge")}
+          </span>
         </footer>
       </div>
 

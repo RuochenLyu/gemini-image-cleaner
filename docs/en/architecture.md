@@ -2,7 +2,7 @@
 
 ## Goal
 
-Banana Cleaner is designed as a local-first Gemini watermark remover that remains easy to read and contribute to as an open-source repository.
+Gemini Image Cleaner is designed as a local-first Gemini watermark remover that remains easy to read and contribute to as an open-source repository.
 
 ## Main modules
 
@@ -12,6 +12,7 @@ Banana Cleaner is designed as a local-first Gemini watermark remover that remain
 - `src/lib/watermark/`: file decoding, mask alpha maps, worker orchestration, and PNG export
 - `src/lib/queue/`: sequential batch processing queue
 - `src/workers/`: pixel restoration worker
+- `src/lib/download/`: single-file and batch ZIP download helpers
 - `src/lib/i18n/`: locale detection and message lookup
 
 ## Processing flow

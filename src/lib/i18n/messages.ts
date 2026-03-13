@@ -85,6 +85,7 @@ export const messages = {
     footerTitle: "开源、可部署、可维护",
     footerText: "UI 和处理链路都保持轻量，方便继续演进视觉和交互。",
     addMore: "继续添加图片",
+    pasteAdded: "已添加 {count} 张图片",
   },
   "en-US": {
     appName: "Gemini Image Cleaner",
@@ -183,6 +184,7 @@ export const messages = {
     footerText:
       "The UI and processing pipeline both stay lightweight so the product can keep evolving cleanly.",
     addMore: "Add more images",
+    pasteAdded: "Added {count} image(s)",
   },
   "ja-JP": {
     appName: "Gemini Image Cleaner",
@@ -282,6 +284,7 @@ export const messages = {
     footerText:
       "UI も処理パイプラインも軽量に保ち、今後の改善を続けやすくしています。",
     addMore: "画像を追加",
+    pasteAdded: "{count} 枚の画像を追加しました",
   },
 } as const satisfies Record<Locale, Record<string, string>>;
 
