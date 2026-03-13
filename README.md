@@ -104,6 +104,10 @@ npm run format:check
 
 PNG 可以避免重复编码损失，也更适合稳定输出去水印结果。
 
+## 致谢
+
+- [gemini-watermark-remover](https://github.com/GargantuaX/gemini-watermark-remover) — 本项目参考了该项目的去水印实现思路。
+
 ## License
 
 本项目使用 [MIT](./LICENSE) 协议开源。

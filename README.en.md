@@ -63,6 +63,10 @@ npm run format:check
 - [Deployment](./docs/en/deployment.md)
 - Chinese source docs live in [`docs/`](./docs/)
 
+## Acknowledgements
+
+- [gemini-watermark-remover](https://github.com/GargantuaX/gemini-watermark-remover) — This project was inspired by its watermark removal approach.
+
 ## License
 
 Released under the [MIT](./LICENSE) license.

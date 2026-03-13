@@ -200,7 +200,7 @@ export default function App() {
             <div className="banana-brand-mark flex size-11 items-center justify-center rounded-[1.2rem] border border-white/50">
               <img src="/banana-mark.svg" alt="" className="size-6" />
             </div>
-            <p className="text-base font-semibold tracking-tight text-foreground">
+            <p className="whitespace-nowrap text-base font-semibold tracking-tight text-foreground">
               {t("appName")}
             </p>
           </div>
@@ -212,7 +212,7 @@ export default function App() {
           />
         </header>
 
-        <main className="flex flex-col gap-6 lg:gap-8">
+        <main className="flex flex-1 flex-col gap-6 lg:gap-8">
           <section className="w-full space-y-3">
             <h1 className="text-[clamp(2.4rem,6vw,4.4rem)] font-bold leading-[0.92] tracking-[-0.04em] text-foreground">
               {t("heroTitle")}
