@@ -95,7 +95,7 @@ export function ResultCard({
               loading="lazy"
               onLoad={handleImageLoad}
               className={cn(
-                "h-full w-full object-cover transition-[transform,opacity] duration-280 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/result-card:-translate-y-0.5",
+                "h-full w-full object-cover object-right-bottom transition-[transform,opacity] duration-280 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover/result-card:-translate-y-0.5",
                 result.state === "processing" && "saturate-75",
                 imageLoaded ? "opacity-100" : "opacity-0",
               )}
