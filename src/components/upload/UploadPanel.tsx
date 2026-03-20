@@ -69,37 +69,39 @@ export function UploadPanel({ onFilesSelected, isBusy, t }: UploadPanelProps) {
         className="banana-dropzone-illustration pointer-events-none w-full max-w-[16rem] select-none sm:max-w-[18rem]"
       />
 
-      {isBusy ? (
-        <div className="flex items-center gap-2.5">
-          <LoaderCircleIcon className="size-5 animate-spin text-primary" />
-          <p className="text-sm font-medium text-foreground">
-            {t("uploadBusy")}
-          </p>
-        </div>
-      ) : isDragging ? (
-        <div className="flex items-center gap-2.5">
-          <UploadIcon className="size-5 text-primary" />
-          <p className="text-sm font-medium text-foreground">
-            {t("uploadDropReady")}
-          </p>
-        </div>
-      ) : (
-        <>
-          <Button
-            asChild
-            size="lg"
-            className="h-12 pointer-events-none rounded-full px-12 text-base group-hover/drop:pointer-events-auto"
-          >
-            <span aria-hidden="true">
-              <UploadIcon className="size-5" />
-              {t("uploadAction")}
-            </span>
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            {t("uploadDropTitle")}
-          </p>
-        </>
-      )}
+      <div className="flex min-h-[5rem] items-center justify-center">
+        {isBusy ? (
+          <div className="flex items-center gap-2.5">
+            <LoaderCircleIcon className="size-5 animate-spin text-primary" />
+            <p className="text-sm font-medium text-foreground">
+              {t("uploadBusy")}
+            </p>
+          </div>
+        ) : isDragging ? (
+          <div className="flex items-center gap-2.5">
+            <UploadIcon className="size-5 text-primary" />
+            <p className="text-sm font-medium text-foreground">
+              {t("uploadDropReady")}
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 pointer-events-none rounded-full px-12 text-base group-hover/drop:pointer-events-auto"
+            >
+              <span aria-hidden="true">
+                <UploadIcon className="size-5" />
+                {t("uploadAction")}
+              </span>
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              {t("uploadDropTitle")}
+            </p>
+          </div>
+        )}
+      </div>
 
       <p className="text-xs text-muted-foreground/70">
         {t("uploadFormats")} · {t("pasteHint")} · {t("privacyBadge")}

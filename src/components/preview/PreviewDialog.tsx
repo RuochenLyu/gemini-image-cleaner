@@ -1,7 +1,6 @@
 import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -51,6 +50,7 @@ export function PreviewDialog({
   const canGoPrev = activeIndex > 0;
   const canGoNext =
     activeIndex >= 0 && activeIndex < successfulResults.length - 1;
+  const hasMultipleResults = successfulResults.length > 1;
 
   const goPrev = useCallback(() => {
     const previous = successfulResults[activeIndex - 1];
@@ -108,34 +108,15 @@ export function PreviewDialog({
         className="banana-panel max-w-[min(96vw,72rem)] gap-6 rounded-[2rem] border-border/70 p-4 sm:p-6"
       >
         <DialogHeader className="gap-4 pr-10">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-2">
-              <DialogTitle className="text-[clamp(1.4rem,2.5vw,2rem)] font-bold tracking-[-0.03em]">
-                {activeResult?.originalFile.name ?? t("previewTitle")}
-              </DialogTitle>
-              <DialogDescription className="text-sm/6">
-                {activeResult && activeResult.width && activeResult.height
-                  ? `${activeResult.width} × ${activeResult.height}`
-                  : t("noPreview")}
-              </DialogDescription>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {activeResult ? (
-                <Badge
-                  variant="outline"
-                  className="rounded-full border-border/70 bg-background/80 px-3 py-1"
-                >
-                  {activeIndex + 1} / {successfulResults.length}
-                </Badge>
-              ) : null}
-              {activeResult ? (
-                <Button size="sm" onClick={() => onDownload(activeResult)}>
-                  <DownloadIcon data-icon="inline-start" />
-                  {t("downloadOne")}
-                </Button>
-              ) : null}
-            </div>
+          <div className="min-w-0 space-y-2">
+            <DialogTitle className="min-w-0 break-all text-[clamp(1.4rem,2.5vw,2rem)] leading-tight font-bold tracking-[-0.03em]">
+              {activeResult?.originalFile.name ?? t("previewTitle")}
+            </DialogTitle>
+            <DialogDescription className="text-sm/6">
+              {activeResult && activeResult.width && activeResult.height
+                ? `${activeResult.width} × ${activeResult.height}`
+                : t("noPreview")}
+            </DialogDescription>
           </div>
         </DialogHeader>
 
@@ -163,32 +144,42 @@ export function PreviewDialog({
             </TabsList>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!canGoPrev}
-                onClick={goPrev}
-              >
-                <ChevronLeftIcon data-icon="inline-start" />
-                {t("previous")}
-                <kbd className="ml-1 hidden text-[10px] text-muted-foreground sm:inline">
-                  ←
-                </kbd>
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={!canGoNext}
-                onClick={goNext}
-              >
-                {t("next")}
-                <ChevronRightIcon data-icon="inline-end" />
-                <kbd className="ml-1 hidden text-[10px] text-muted-foreground sm:inline">
-                  →
-                </kbd>
-              </Button>
+              {hasMultipleResults ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!canGoPrev}
+                    onClick={goPrev}
+                  >
+                    <ChevronLeftIcon data-icon="inline-start" />
+                    {t("previous")}
+                    <kbd className="ml-1 hidden text-[10px] text-muted-foreground sm:inline">
+                      ←
+                    </kbd>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!canGoNext}
+                    onClick={goNext}
+                  >
+                    {t("next")}
+                    <ChevronRightIcon data-icon="inline-end" />
+                    <kbd className="ml-1 hidden text-[10px] text-muted-foreground sm:inline">
+                      →
+                    </kbd>
+                  </Button>
+                </>
+              ) : null}
+              {activeResult ? (
+                <Button type="button" size="sm" onClick={() => onDownload(activeResult)}>
+                  <DownloadIcon data-icon="inline-start" />
+                  {t("downloadOne")}
+                </Button>
+              ) : null}
             </div>
           </div>
 
@@ -200,7 +191,7 @@ export function PreviewDialog({
                 src={imageUrl}
                 alt={activeResult?.originalFile.name ?? t("previewTitle")}
                 className={cn(
-                  "max-h-[72vh] w-full object-contain sm:max-h-[72vh]",
+                  "max-h-[72vh] max-w-full w-full object-contain sm:max-h-[72vh]",
                   "animate-in fade-in duration-300",
                   "max-h-[50vh] landscape:max-h-[60vh] sm:max-h-[72vh]",
                 )}
